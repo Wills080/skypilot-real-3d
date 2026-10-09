@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>SkyPilot Real 3D</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#101b27;color:white;font-family:system-ui,Arial}button,select{font:inherit}canvas{display:block}
+.overlay{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:16px;background:#06101bdc;backdrop-filter:blur(6px);overflow:auto}
+.panel{width:min(900px,96vw);max-height:94vh;overflow:auto;background:#101d2df5;border:1px solid #ffffff25;border-radius:22px;padding:24px;box-shadow:0 20px 70px #0009}
+h1{font-size:clamp(30px,5vw,52px);margin:0}h2{font-size:18px;margin:18px 0 8px}.sub{color:#b8c7d8;margin:5px 0 18px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.choice{padding:13px;border-radius:13px;text-align:left;color:white;background:#ffffff09;border:1px solid #ffffff25;cursor:pointer}.choice strong{display:block}.choice span{display:block;color:#b4c2d3;font-size:12px;margin-top:4px}.choice.sel{border-color:#62b9ff;background:#1a619344}
+select{background:#17283a;color:white;border:1px solid #ffffff35;border-radius:9px;padding:8px}label{display:block;font-size:12px;color:#aebed2;margin-bottom:4px}
+.primary{width:100%;padding:15px;margin-top:18px;border:0;border-radius:13px;background:#2788e8;color:white;font-weight:800;cursor:pointer}.primary:disabled{opacity:.4}
+#hud{display:none;position:fixed;inset:0;z-index:4;pointer-events:none}.hudbox{position:absolute;top:12px;left:12px;background:#07111dcc;border:1px solid #ffffff2b;border-radius:12px;padding:10px;line-height:1.6;font-size:13px}.right{left:auto;right:12px;text-align:right}
+#exit{pointer-events:auto;position:absolute;right:12px;bottom:12px;border:1px solid #ffffff35;border-radius:12px;background:#07111ddd;color:white;padding:12px 15px;font-weight:700;cursor:pointer}
+#view{pointer-events:auto;position:absolute;right:12px;top:125px;border:1px solid #ffffff35;border-radius:10px;background:#07111ddd;color:white;padding:10px;cursor:pointer}
+#touch{display:none;position:fixed;z-index:5;inset:0;pointer-events:none}.pad{position:absolute;bottom:15px;display:grid;grid-template-columns:repeat(3,50px);gap:5px;pointer-events:auto}.pad button{height:48px;border-radius:12px;color:white;background:#07111dcc;border:1px solid #ffffff45;font-size:18px}.left{left:12px}.rightpad{right:12px;grid-template-columns:repeat(2,50px)}
+#hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#07111dcc;border-radius:10px;padding:9px;font-size:12px;white-space:nowrap}
+@media(max-width:620px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:17px}#hint{bottom:130px;font-size:10px;white-space:normal;text-align:center;width:70%}}
+</style></head>
+<body>
+<div id="setup" class="overlay"><div class="panel" style="max-width:600px;text-align:center">
+<label for="lang1">Language / Langue / Lingua / Sprache</label><select id="lang1"><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="de">Deutsch</option></select>
+<h1 id="setupTitle">How are you playing?</h1><p class="sub" id="setupSub">Choose your controls.</p>
+<div class="grid2"><button class="choice" data-input="keyboard"><strong id="kb">Keyboard</strong><span id="kbsub">Arrow keys and WASD</span></button><button class="choice" data-input="touch"><strong id="mob">Mobile / Tablet</strong><span id="mobsub">On-screen touch controls</span></button></div>
+<button id="continue" class="primary" disabled>Continue</button></div></div>
+<div id="menu" class="overlay" style="display:none"><div class="panel">
+<label for="lang2">Language</label><select id="lang2"><option value="en">English</option><option value="fr">Français</option><option value="it">Italiano</option><option value="de">Deutsch</option></select>
+<h1>SKYPILOT <span style="font-weight:400">REAL 3D</span></h1><p class="sub" id="menusub">Beginner-friendly 3D flight simulator</p>
+<h2 id="airlabel">Aircraft</h2><div class="grid">
+<button class="choice sel" data-air="airliner"><strong>Passenger Jet</strong><span>Stable, medium speed</span></button><button class="choice" data-air="trainer"><strong>Trainer</strong><span>Easy to handle</span></button><button class="choice" data-air="fighter"><strong>Fighter Jet</strong><span>Fast and agile</span></button><button class="choice" data-air="cargo"><strong>Cargo Plane</strong><span>Large heavy aircraft</span></button><button class="choice" data-air="turboprop"><strong>Turboprop</strong><span>Regional propeller plane</span></button><button class="choice" data-air="sport"><strong>Sport Plane</strong><span>Small and nimble</span></button>
+</div><h2 id="worldlabel">World</h2><div class="grid"><button class="choice sel" data-world="coast"><strong>Coastal Airport</strong><span>Ocean and hills</span></button><button class="choice" data-world="mountain"><strong>Mountain Valley</strong><span>High terrain</span></button><button class="choice" data-world="city"><strong>City Region</strong><span>Urban scenery</span></button></div>
+<h2 id="weatherlabel">Weather</h2><div class="grid"><button class="choice sel" data-weather="clear"><strong>Clear</strong><span>Bright skies</span></button><button class="choice" data-weather="cloudy"><strong>Cloudy</strong><span>Overcast sky</span></button><button class="choice" data-weather="rain"><strong>Rain</strong><span>Reduced visibility</span></button><button class="choice" data-weather="storm"><strong>Storm</strong><span>Dark skies</span></button></div>
+<h2>Flight options</h2><div class="grid2"><button class="choice sel" data-mode="beginner"><strong>Beginner Assist</strong><span>Gentle controls</span></button><button class="choice" data-mode="normal"><strong>Normal</strong><span>More responsive</span></button><button class="choice sel" data-view="chase"><strong>Chase Camera</strong><span>View your plane</span></button><button class="choice" data-view="cockpit"><strong>Cockpit View</strong><span>Fly from inside</span></button></div>
+<button id="start" class="primary">START FLIGHT</button></div></div>
+<div id="hud"><div class="hudbox">SPEED <b id="speed">0</b> kt<br>ALTITUDE <b id="alt">0</b> ft<br>HEADING <b id="heading">0</b>°</div><div class="hudbox right">THROTTLE <b id="thr">70</b>%<br>FUEL <b id="fuel">100</b>%</div><div id="hint">W/S throttle · ↑/↓ pitch · ←/→ roll · A/D yaw</div><button id="view">CHANGE VIEW</button><button id="exit">EXIT TO MAIN MENU</button></div>
+<div id="touch"><div class="pad left"><button data-key="ArrowLeft">↶</button><button data-key="ArrowUp">▲</button><button data-key="ArrowRight">↷</button><button data-key="ArrowDown">▼</button></div><div class="pad rightpad"><button data-key="KeyA">◀</button><button data-key="KeyD">▶</button><button data-key="KeyW">＋</button><button data-key="KeyS">−</button></div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const $=id=>document.getElementById(id);
+const words={
+en:{setup:'How are you playing?',choose:'Choose your controls.',kb:'Keyboard',kbs:'Arrow keys and WASD',mob:'Mobile / Tablet',mobs:'On-screen touch controls',cont:'Continue',sub:'Beginner-friendly 3D flight simulator',air:'Aircraft',world:'World',weather:'Weather',start:'START FLIGHT',exit:'EXIT TO MAIN MENU',hint:'W/S throttle · ↑/↓ pitch · ←/→ roll · A/D yaw'},
+fr:{setup:'Comment jouez-vous ?',choose:'Choisissez vos commandes.',kb:'Clavier',kbs:'Flèches et WASD',mob:'Mobile / Tablette',mobs:'Commandes tactiles à l’écran',cont:'Continuer',sub:'Simulateur de vol 3D pour débutants',air:'Avions',world:'Monde',weather:'Météo',start:'DÉMARRER LE VOL',exit:'QUITTER VERS LE MENU',hint:'W/S accélération · ↑/↓ tangage · ←/→ roulis · A/D lacet'},
+it:{setup:'Come stai giocando?',choose:'Scegli i comandi.',kb:'Tastiera',kbs:'Frecce e WASD',mob:'Cellulare / Tablet',mobs:'Comandi touch sullo schermo',cont:'Continua',sub:'Simulatore di volo 3D per principianti',air:'Aerei',world:'Mondo',weather:'Meteo',start:'INIZIA VOLO',exit:'ESCI AL MENU PRINCIPALE',hint:'W/S acceleratore · ↑/↓ beccheggio · ←/→ rollio · A/D imbardata'},
+de:{setup:'Wie spielst du?',choose:'Wähle deine Steuerung.',kb:'Tastatur',kbs:'Pfeiltasten und WASD',mob:'Mobil / Tablet',mobs:'Touch-Steuerung auf dem Bildschirm',cont:'Weiter',sub:'Einsteigerfreundlicher 3D-Flugsimulator',air:'Flugzeuge',world:'Welt',weather:'Wetter',start:'FLUG STARTEN',exit:'ZUM HAUPTMENÜ',hint:'W/S Schub · ↑/↓ Nick · ←/→ Roll · A/D Gier'}
+};
+let lang=localStorage.getItem('spLang')||'en',device=localStorage.getItem('spDevice')||'',cfg={air:'airliner',world:'coast',weather:'clear',mode:'beginner',view:'chase'};
+function setLang(l){lang=l;localStorage.setItem('spLang',l);let t=words[l];document.documentElement.lang=l;$('setupTitle').textContent=t.setup;$('setupSub').textContent=t.choose;$('kb').textContent=t.kb;$('kbsub').textContent=t.kbs;$('mob').textContent=t.mob;$('mobsub').textContent=t.mobs;$('continue').textContent=t.cont;$('menusub').textContent=t.sub;$('airlabel').textContent=t.air;$('worldlabel').textContent=t.world;$('weatherlabel').textContent=t.weather;$('start').textContent=t.start;$('exit').textContent=t.exit;$('hint').textContent=t.hint;$('lang1').value=l;$('lang2').value=l}
+setLang(lang);$('lang1').onchange=e=>setLang(e.target.value);$('lang2').onchange=e=>setLang(e.target.value);
+document.querySelectorAll('[data-input]').forEach(b=>b.onclick=()=>{device=b.dataset.input;document.querySelectorAll('[data-input]').forEach(x=>x.classList.toggle('sel',x===b));$('continue').disabled=false});
+$('continue').onclick=()=>{localStorage.setItem('spDevice',device);$('setup').style.display='none';$('menu').style.display='flex';$('touch').style.display=device==='touch'?'block':'none'};
+for(const attr of ['air','world','weather','mode','view'])document.querySelectorAll('[data-'+attr+']').forEach(b=>b.onclick=()=>{cfg[attr]=b.dataset[attr];document.querySelectorAll('[data-'+attr+']').forEach(x=>x.classList.toggle('sel',x===b))});
+if(device){$('setup').style.display='none';$('menu').style.display='flex';$('touch').style.display=device==='touch'?'block':'none'}
+let scene,camera,renderer,plane,clock,playing=false,keys={},speed=0,throttle=.7,heading=0,pitch=0,roll=0,fuel=100,worldGroup,cockpit;
+const mat=(c,r=0.9,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+function meshBox(w,h,d,c){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c))}
+
+function buildPlane(){
+  const g=new THREE.Group(), type=cfg.air;
+  const paintColor=({airliner:0xf0f2f4,trainer:0xf4f0df,fighter:0x586b78,cargo:0xd7dce0,turboprop:0xe8ecef,sport:0xe5e9ec})[type]||0xe9ecef;
+  const paint=new THREE.MeshStandardMaterial({color:paintColor,roughness:.38,metalness:.18});
+  const underside=new THREE.MeshStandardMaterial({color:0x9ba8b2,roughness:.58,metalness:.15});
+  const dark=new THREE.MeshStandardMaterial({color:0x17232c,roughness:.24,metalness:.15});
+  const glass=new THREE.MeshStandardMaterial({color:0x397b9b,roughness:.18,metalness:.25,transparent:true,opacity:.84});
+  const accent=new THREE.MeshStandardMaterial({color:type==='fighter'?0x35434c:type==='trainer'?0xc63e32:type==='sport'?0xc73b32:0x245b86,roughness:.36,metalness:.12});
+  function ellipsoid(x,y,z,sx,sy,sz,material=paint){const m=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);g.add(m);return m;}
+  function box(x,y,z,sx,sy,sz,material=paint){const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);m.position.set(x,y,z);g.add(m);return m;}
+  function wing(span,rootChord,tipChord,sweep,y,z,material=paint){
+    // A tapered, swept wing with a thin, airfoil-like extruded section.
+    const sh=new THREE.Shape();
+    sh.moveTo(-span/2+sweep,-rootChord*.35);
+    sh.lineTo(-span/2+sweep+tipChord,-rootChord*.35);
+    sh.lineTo(span/2-sweep+tipChord,rootChord*.35);
+    sh.lineTo(span/2-sweep,rootChord*.35);
+    sh.lineTo(0,rootChord*.5);
+    sh.lineTo(-span/2+sweep,-rootChord*.35);
+    const m=new THREE.Mesh(new THREE.ShapeGeometry(sh),material);
+    m.rotation.x=-Math.PI/2; m.position.set(0,y,z); g.add(m);
+    const lower=new THREE.Mesh(new THREE.ShapeGeometry(sh),underside);
+    lower.rotation.x=Math.PI/2; lower.position.set(0,y-.055,z); g.add(lower);
+    // Wing thickness strip along the leading edge.
+    box( span*.82, .09, .16, 0, y-.025, z+rootChord*.18, material);
+  }
+  function taperedWing(span,rootChord,tipChord,sweep,y,z,material=paint){
+    const pts=[
+      [-span/2+sweep, -(z+rootChord*.42)],[-span/2+sweep+tipChord,-(z+rootChord*.42)],
+      [span/2-sweep+tipChord,-(z-rootChord*.42)],[span/2-sweep,-(z-rootChord*.42)],
+      [0,-(z+rootChord*.5)]
+    ];
+    const shape=new THREE.Shape(); shape.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<pts.length;i++) shape.lineTo(pts[i][0],pts[i][1]); shape.closePath();
+    const geom=new THREE.ShapeGeometry(shape);
+    material.side=THREE.DoubleSide; underside.side=THREE.DoubleSide;
+    const top=new THREE.Mesh(geom,material);top.rotation.x=-Math.PI/2;top.position.set(0,y,0);g.add(top);
+    const bot=new THREE.Mesh(geom.clone(),underside);bot.rotation.x=-Math.PI/2;bot.position.set(0,y-.045,0);g.add(bot);
+    // Thin airfoil edge gives the wing visible thickness.
+    const edge=box(0,y-.02,z,span,.08,.14,material); edge.rotation.y=0;
+  }
+  function engine(x,y,z,r,len,material=underside){
+    const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,20),material);
+    m.rotation.x=Math.PI/2;m.position.set(x,y,z);g.add(m);
+    ellipsoid(x,y,z+len*.43,r*.86,r*.86,len*.13,dark);
+  }
+  function prop(x,y,z,r){
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.18,12),underside);hub.rotation.x=Math.PI/2;hub.position.set(x,y,z);g.add(hub);
+    for(let a=0;a<3;a++){const b=box(x,y,z, .09,r*1.55,.035,accent);b.rotation.z=a*Math.PI/3;}
+  }
+  function fin(x,y,z,h,chord,material=accent,tilt=0){
+    const shape=new THREE.Shape();shape.moveTo(-chord*.55,0);shape.lineTo(chord*.45,0);shape.lineTo(chord*.15,h);shape.lineTo(-chord*.15,h);shape.closePath();
+    const m=new THREE.Mesh(new THREE.ShapeGeometry(shape),material);m.position.set(x,y,z);m.rotation.z=tilt;g.add(m);
+  }
+  // Fuselage profile differs by aircraft: long transport tube, compact piston body, or pointed fighter.
+  if(type==='airliner'||type==='cargo'){
+    ellipsoid(0,0,-.15,type==='cargo'?.72:.58,.62,type==='cargo'?4.45:4.15,paint);
+    ellipsoid(0,.03,3.45,.47,.43,1.18,paint); // rounded nose
+    ellipsoid(0,.16,-3.75,.43,.42,.78,paint);
+    // cockpit glazing and windshield panes
+    for(let x of [-.23,0,.23]){const w=box(x,.39,3.15,.18,.13,.24,glass);w.rotation.x=-.18;}
+    taperedWing(type==='cargo'?18:15,type==='cargo'?3.6:3.1,type==='cargo'?1.45:1.1,.95,.05,.05,paint);
+    taperedWing(type==='cargo'?6.2:5.0,1.55,.7,.2,.18,-3.15,paint);
+    fin(0,.35,-3.55,1.8,1.45,accent);
+    // horizontal tailplanes
+    taperedWing(5.1,1.25,.55,.15,.2,-3.5,paint);
+    const count=type==='cargo'?4:2;
+    for(let i=0;i<count;i++){
+      const x=count===4?[-5.7,-2.5,2.5,5.7][i]:[-3.9,3.9][i];
+      engine(x,-.38,.0,type==='cargo'?.42:.48,type==='cargo'?1.4:1.65,underside);
+      box(x,-.35,-.02,.11,.13,1.35,accent);
+    }
+    // passenger windows in neat rows along both sides
+    for(let side of [-1,1]) for(let i=0;i<13;i++){
+      const z=2.1-i*.43;
+      const w=box(side*(type==='cargo'?.69:.555),.12,z,.035,.09,.14,dark);
+    }
+    if(type==='cargo'){for(let side of [-1,1])box(side*.72,-.08,-1.5,.035,.42,1.3,accent);}
+  }else if(type==='fighter'){
+    ellipsoid(0,.02,.15,.34,.36,4.65,paint);
+    // needle nose cone
+    const nose=new THREE.Mesh(new THREE.ConeGeometry(.34,2.0,24),paint);nose.rotation.x=Math.PI/2;nose.position.set(0,.02,3.25);g.add(nose);
+    taperedWing(10.2,3.0,.45,2.05,-.02,.15,paint); // broad swept/delta wing
+    taperedWing(3.8,1.25,.25,.25,.12,-3.05,paint);
+    fin(-.52,.25,-3.15,1.25,.85,accent,-.12);fin(.52,.25,-3.15,1.25,.85,accent,.12);
+    ellipsoid(0,.34,1.0,.3,.24,1.0,glass);
+    for(let x of [-.48,.48]){engine(x,-.16,-.7,.22,1.25,dark);ellipsoid(x,-.12,-.1,.25,.24,.7,underside);}
+    // small wingtip missile rails
+    for(let x of [-4.8,4.8])box(x,-.1,-.15,.09,.09,1.25,underside);
+  }else if(type==='turboprop'){
+    ellipsoid(0,0,-.15,.42,.45,3.2,paint);ellipsoid(0,.02,2.65,.35,.32,.85,paint);
+    taperedWing(12.2,2.35,.85,.38,.45,.0,paint);taperedWing(4.0,1.0,.48,.1,.3,-2.65,paint);fin(0,.25,-2.85,1.25,.95,accent);
+    ellipsoid(0,.25,2.35,.27,.23,.65,glass);
+    for(let x of [-3.05,3.05]){engine(x,.12,.05,.32,1.05,underside);prop(x,.12,.75,.52);}
+    for(let side of [-1,1])for(let i=0;i<7;i++)box(side*.405,.12,1.65-i*.48,.025,.075,.11,dark);
+  }else if(type==='trainer'){
+    ellipsoid(0,0,-.05,.28,.3,2.65,paint);ellipsoid(0,.04,2.25,.25,.25,.72,paint);
+    taperedWing(9.2,1.75,.7,.28,.2,-.15,paint);taperedWing(3.1,.85,.4,.08,.18,-2.15,paint);fin(0,.22,-2.35,.92,.72,accent);
+    ellipsoid(0,.31,.75,.29,.3,1.05,glass);ellipsoid(0,.3,-.12,.25,.25,.6,glass);
+    engine(0,-.03,2.72,.2,.62,underside);prop(0,0,3.08,.55);
+    for(let side of [-1,1])box(side*.28,-.12,-.1,.07,.08,1.6,accent);
+  }else{ // Sport plane: low wing, bubble canopy and nose propeller.
+    ellipsoid(0,0,-.1,.3,.32,2.65,paint);ellipsoid(0,.02,2.35,.27,.25,.7,paint);
+    taperedWing(8.0,1.65,.58,.28,-.12,-.05,paint);taperedWing(2.8,.75,.35,.08,.14,-2.1,paint);fin(0,.2,-2.25,.88,.7,accent);
+    ellipsoid(0,.36,.65,.31,.32,1.0,glass);engine(0,-.03,2.65,.18,.55,underside);prop(0,0,2.98,.62);
+    for(let side of [-1,1])box(side*.3,-.12,-.05,.055,.08,1.3,accent);
+  }
+  // Landing gear and wheels are visible on all models.
+  const gearDark=new THREE.MeshStandardMaterial({color:0x303941,roughness:.8});
+  const gearPairs=(type==='airliner'||type==='cargo')?[-1.1,1.1]:[-.65,.65];
+  for(const x of gearPairs){
+    const strut=box(x,-.58,.0,.075,.62,.075,gearDark);strut.rotation.z=x<0?-.08:.08;
+    const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.13,18),gearDark);wheel.rotation.z=Math.PI/2;wheel.position.set(x,-.88,.05);g.add(wheel);
+  }
+  const noseStrut=box(0,-.42,2.0,.065,.42,.065,gearDark);
+  const noseWheel=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.1,16),gearDark);noseWheel.rotation.z=Math.PI/2;noseWheel.position.set(0,-.62,2.12);g.add(noseWheel);
+  return g;
+}
+
+function buildCockpit(){
+  const cockpit = new THREE.Group();
+  const dark = new THREE.MeshStandardMaterial({color:0x18232d, roughness:.72, metalness:.18});
+  const trim = new THREE.MeshStandardMaterial({color:0x657783, roughness:.45, metalness:.35});
+  const glass = new THREE.MeshBasicMaterial({color:0x7fb8d5, transparent:true, opacity:.16, side:THREE.DoubleSide});
+  function panel(w,h,d,material,x,y,z,rx=0,ry=0,rz=0){
+    const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+    m.position.set(x,y,z); m.rotation.set(rx,ry,rz); cockpit.add(m); return m;
+  }
+  // Camera-local cockpit: windscreen frame, instrument coaming and dashboard.
+  panel(3.2,.16,.16,dark,0,.58,-3.1);
+  panel(.14,1.35,.16,dark,-1.55,-.05,-3.1);
+  panel(.14,1.35,.16,dark,1.55,-.05,-3.1);
+  panel(3.0,.12,.12,trim,0,-.68,-2.7);
+  panel(3.15,.42,.72,dark,0,-1.0,-1.95,-.12,0,0);
+  // Windshield tint sits beyond the frame so the world remains visible.
+  const pane=new THREE.Mesh(new THREE.PlaneGeometry(2.85,1.12),glass);
+  pane.position.set(0,.02,-3.04); cockpit.add(pane);
+  // Six readable instrument faces and bezels.
+  for(let i=0;i<6;i++){
+    const x=-1.18+(i%3)*1.18, y=-.94-Math.floor(i/3)*.01;
+    const bezel=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.07,24),trim);
+    bezel.rotation.x=Math.PI/2; bezel.position.set(x,y,-1.56); cockpit.add(bezel);
+    const face=new THREE.Mesh(new THREE.CircleGeometry(.18,24),new THREE.MeshBasicMaterial({color:i===0?0x183e4e:0x101820}));
+    face.position.set(x,y,-1.515); cockpit.add(face);
+    const needle=new THREE.Mesh(new THREE.BoxGeometry(.018,.13,.015),new THREE.MeshBasicMaterial({color:0xf3d18a}));
+    needle.position.set(x,y,-1.49); needle.rotation.z=(i*.7)-.8; cockpit.add(needle);
+  }
+  // Yoke and central control column.
+  panel(.12,.48,.12,dark,0,-.75,-1.15,.25);
+  const yoke=new THREE.Mesh(new THREE.TorusGeometry(.28,.045,8,24),trim);
+  yoke.position.set(0,-.63,-1.25); cockpit.add(yoke);
+  cockpit.visible=false;
+  return cockpit;
+}
+
+function addWorld(){worldGroup=new THREE.Group();let ground=new THREE.Mesh(new THREE.PlaneGeometry(1000,1000),mat(cfg.world==='coast'?0x55764a:0x52674b));ground.rotation.x=-Math.PI/2;ground.position.y=-2;worldGroup.add(ground);let runway=new THREE.Mesh(new THREE.PlaneGeometry(24,300),mat(0x30353b));runway.rotation.x=-Math.PI/2;runway.position.set(0,-1.95,0);worldGroup.add(runway);for(let z=-135;z<145;z+=20){let m=new THREE.Mesh(new THREE.PlaneGeometry(1.1,9),mat(0xf2f1dc));m.rotation.x=-Math.PI/2;m.position.set(0,-1.92,z);worldGroup.add(m)}for(let i=0;i<70;i++){let h=cfg.world==='mountain'?THREE.MathUtils.randFloat(20,70):THREE.MathUtils.randFloat(4,18),r=THREE.MathUtils.randFloat(5,16),m=new THREE.Mesh(new THREE.ConeGeometry(r,h,8),mat(cfg.world==='city'?0x59636d:0x58684e));m.position.set(THREE.MathUtils.randFloat(-300,300),h/2-2,THREE.MathUtils.randFloat(-350,350));if(Math.abs(m.position.x)<40&&Math.abs(m.position.z)<175){i--;continue}worldGroup.add(m)}if(cfg.world==='coast'){let sea=new THREE.Mesh(new THREE.PlaneGeometry(500,650),new THREE.MeshStandardMaterial({color:0x236984,roughness:.35}));sea.rotation.x=-Math.PI/2;sea.position.set(320,-1.8,0);worldGroup.add(sea)}if(cfg.world==='city')for(let i=0;i<100;i++){let b=meshBox(THREE.MathUtils.randFloat(5,14),THREE.MathUtils.randFloat(5,32),THREE.MathUtils.randFloat(5,14),0x697581);b.position.set(THREE.MathUtils.randFloat(-200,200),b.geometry.parameters.height/2-2,THREE.MathUtils.randFloat(-220,220));worldGroup.add(b)}scene.add(worldGroup)}
+function init(){if(renderer){renderer.domElement.remove();renderer.dispose()}scene=new THREE.Scene();scene.background=new THREE.Color(cfg.weather==='storm'?0x354252:cfg.weather==='rain'?0x778b9b:cfg.weather==='cloudy'?0x9baab7:0x80b9e5);scene.fog=new THREE.Fog(scene.background,160,700);camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,1500);renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.appendChild(renderer.domElement);scene.add(new THREE.HemisphereLight(0xe1f0ff,0x526047,2));let sun=new THREE.DirectionalLight(0xffffff,2.7);sun.position.set(-100,160,80);scene.add(sun);addWorld();let n=cfg.weather==='clear'?10:cfg.weather==='cloudy'?35:60;for(let i=0;i<n;i++){let c=new THREE.Mesh(new THREE.SphereGeometry(THREE.MathUtils.randFloat(8,20),12,8),mat(cfg.weather==='storm'?0x46515f:0xe2e8ed));c.scale.y=.45;c.position.set(THREE.MathUtils.randFloat(-350,350),THREE.MathUtils.randFloat(50,105),THREE.MathUtils.randFloat(-350,350));scene.add(c)}plane=buildPlane();plane.position.set(0,0,110);scene.add(plane);cockpit=buildCockpit();camera.add(cockpit);scene.add(camera);clock=new THREE.Clock();playing=true;$('hud').style.display='block';$('touch').style.display=device==='touch'?'block':'none';animate()}
+function update(dt){let assist=cfg.mode==='beginner';throttle=THREE.MathUtils.clamp(throttle+((keys.KeyW?1:0)-(keys.KeyS?1:0))*dt*.35,0,1);speed+=(throttle*125-speed)*dt*.17;if(keys.Space)speed*=.9;let factor=assist?.6:1;heading+=((keys.KeyD?1:0)-(keys.KeyA?1:0))*dt*(.35+speed/100)*factor;pitch=THREE.MathUtils.clamp(pitch+((keys.ArrowDown?1:0)-(keys.ArrowUp?1:0))*dt*.5*factor,-.7,.7);let r=((keys.ArrowLeft?1:0)-(keys.ArrowRight?1:0))*.6*factor;roll=THREE.MathUtils.lerp(roll,r,Math.min(1,dt*3));plane.rotation.set(-pitch,heading,roll,'YXZ');let forward=new THREE.Vector3(Math.sin(heading)*Math.cos(pitch),Math.sin(pitch),Math.cos(heading)*Math.cos(pitch));plane.position.addScaledVector(forward,speed*dt*.4);if(plane.position.y<0)plane.position.y=0;fuel=Math.max(0,fuel-dt*.035);$('speed').textContent=Math.round(speed);$('alt').textContent=Math.round(plane.position.y*3.281);$('heading').textContent=(Math.round(heading*180/Math.PI)+360)%360;$('thr').textContent=Math.round(throttle*100);$('fuel').textContent=Math.round(fuel);if(cfg.view==='chase'){
+  cockpit.visible=false;
+  let off=new THREE.Vector3(0,5,18).applyEuler(plane.rotation);
+  camera.position.lerp(plane.position.clone().add(off),Math.min(1,dt*3));
+  camera.lookAt(plane.position.clone().add(new THREE.Vector3(0,1,0)));
+}else{
+  cockpit.visible=true;
+  const eyeOffset=new THREE.Vector3(0,.72,.65).applyEuler(plane.rotation);
+  camera.position.lerp(plane.position.clone().add(eyeOffset),Math.min(1,dt*5));
+  const forward=new THREE.Vector3(Math.sin(heading)*Math.cos(pitch),Math.sin(pitch),Math.cos(heading)*Math.cos(pitch));
+  camera.lookAt(plane.position.clone().add(eyeOffset).addScaledVector(forward,80));
+}}
+function animate(){if(!playing)return;requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);update(dt);renderer.render(scene,camera)}
+addEventListener('keydown',e=>{keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault()});addEventListener('keyup',e=>keys[e.code]=false);
+document.querySelectorAll('[data-key]').forEach(b=>{let k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,e=>{e.preventDefault();keys[k]=false}))});
+$('start').onclick=()=>{cfg.air=document.querySelector('[data-air].sel')?.dataset.air||cfg.air;cfg.world=document.querySelector('[data-world].sel')?.dataset.world||cfg.world;cfg.weather=document.querySelector('[data-weather].sel')?.dataset.weather||cfg.weather;cfg.mode=document.querySelector('[data-mode].sel')?.dataset.mode||cfg.mode;cfg.view=document.querySelector('[data-view].sel')?.dataset.view||cfg.view;$('menu').style.display='none';init()};
+$('exit').onclick=()=>{playing=false;$('hud').style.display='none';$('touch').style.display='none';$('menu').style.display='flex';if(renderer){renderer.domElement.remove();renderer.dispose();renderer=null}};
+$('view').onclick=()=>{cfg.view=cfg.view==='chase'?'cockpit':'chase'};
+addEventListener('resize',()=>{if(camera&&renderer){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)}});
+</script></body></html>
